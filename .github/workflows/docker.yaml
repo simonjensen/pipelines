@@ -1,0 +1,93 @@
+name: Docker
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+        description: 'Typically just set this to ${{ github.repository }} from the calling repo'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ inputs.image-name }}
+
+jobs:
+  pipeline:
+    name: Pipeline
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+
+      # https://gitversion.net/docs/usage/cli/arguments
+      - name: Create Tag
+        if: github.ref == 'refs/heads/main'
+        id: tag
+        shell: bash
+        run: |
+          nextVersion=$(docker run --rm -v $(pwd):/repo gittools/gitversion:6.4.0-alpine.3.21-9.0 /repo /showvariable MajorMinorPatch)
+          git tag $nextVersion
+          git push --tags
+          echo "tag=$nextVersion" >> $GITHUB_OUTPUT
+
+      - name: Create Release Notes
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          tags=$(git tag -l | sort -V | tail -n 2 | paste -s -d'#')
+          dots="..."
+
+          echo "## What's Changed" > changelog.md
+          git log --pretty=format:'* %h - %s (%an)' --abbrev-commit ${tags/\#/$dots} >> changelog.md
+          echo "" >> changelog.md
+          echo "" >> changelog.md
+
+          echo "### Full Changelog" >> changelog.md
+          echo "* https://github.com/${{ github.repository }}/compare/${tags/\#/$dots}" >> changelog.md
+
+          cat changelog.md
+
+      # https://cli.github.com/manual/gh_release_create
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          tag=$(git tag -l | sort -V | tail -n 1)
+          gh release create $tag -F changelog.md -t $tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to the Container registry
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=raw,value=${{ steps.tag.outputs.tag }},enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
