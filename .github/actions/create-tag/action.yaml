@@ -1,0 +1,20 @@
+name: Create Tag
+
+description: Create and push a new tag
+
+runs:
+  using: composite
+
+  steps:
+
+    # https://gitversion.net/docs/usage/cli/arguments
+    - name: Create Tag
+      if: github.ref == 'refs/heads/main'
+      id: tag
+      shell: bash
+      run: |
+        nextVersion=$(docker run --rm -v $(pwd):/repo gittools/gitversion:6.4.0-alpine.3.21-9.0 /repo /showvariable MajorMinorPatch)
+        git tag $nextVersion
+        git push --tags
+        echo "tag=$nextVersion" >> $GITHUB_OUTPUT
+
