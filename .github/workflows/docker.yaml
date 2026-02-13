@@ -6,7 +6,6 @@ on:
       image-name:
         required: true
         type: string
-        description: 'Typically just set this to ${{ github.repository }} from the calling repo'
 
 env:
   REGISTRY: ghcr.io
