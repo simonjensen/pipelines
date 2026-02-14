@@ -27,13 +27,13 @@ jobs:
         with:
           fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
 
-      - uses: simonjensen/pipelines/.github/actions/create-tag@feat/composite
+      - uses: simonjensen/pipelines/.github/actions/create-tag@main
 
-      - uses: simonjensen/pipelines/.github/actions/create-release-notes@feat/composite
+      - uses: simonjensen/pipelines/.github/actions/create-release-notes@main
 
-      - uses: simonjensen/pipelines/.github/actions/create-release@feat/composite
+      - uses: simonjensen/pipelines/.github/actions/create-release@main
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@feat/composite
+      - uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
 
