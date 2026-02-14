@@ -1,0 +1,26 @@
+name: Create Release Notes
+
+description: Determine commites between the last 2 pushed tags and place them in a changelog file
+
+runs:
+  using: composite
+
+  steps:
+
+    - name: Create Release Notes
+      if: github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        tags=$(git tag -l | sort -V | tail -n 2 | paste -s -d'#')
+        dots="..."
+
+        echo "## What's Changed" > changelog.md
+        git log --pretty=format:'* %h - %s (%an)' --abbrev-commit ${tags/\#/$dots} >> changelog.md
+        echo "" >> changelog.md
+        echo "" >> changelog.md
+
+        echo "### Full Changelog" >> changelog.md
+        echo "* https://github.com/${{ github.repository }}/compare/${tags/\#/$dots}" >> changelog.md
+
+        cat changelog.md
+
