@@ -23,17 +23,27 @@ jobs:
 
     steps:
       - name: Checkout repository
+        id: step-checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
 
-      - uses: simonjensen/pipelines/.github/actions/create-tag@main
+      - name: Create Tag
+        id: step-create-tag
+        uses: simonjensen/pipelines/.github/actions/create-tag@main
 
-      - uses: simonjensen/pipelines/.github/actions/create-release-notes@main
+      - name: Create Release Notes
+        id: step-create-release-notes
+        uses: simonjensen/pipelines/.github/actions/create-release-notes@main
 
-      - uses: simonjensen/pipelines/.github/actions/create-release@main
+      - name: Create Release
+        id: step-create-release
+        uses: simonjensen/pipelines/.github/actions/create-release@main
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
-
+      - name: Docker Build And Release
+        id: step-docker-build-and-release
+        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
+        with:
+          tag: ${{ steps.step-create-tag.outputs.tag }}

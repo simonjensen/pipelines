@@ -1,5 +1,4 @@
 name: Create Release
-
 description: Create a release using GitHub CLI
 
 inputs:
