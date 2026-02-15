@@ -4,12 +4,24 @@ description: Build and publish a Docker container
 inputs:
   tag:
     description: The version tag for the docker image
-    required: true
+    required: false
+    default: ''
 
 runs:
   using: composite
 
   steps:
+    - name: Resolve Image Tag
+      shell: bash
+      run: |
+        # If inputs.tag is empty, use the branch name (github.ref_name)
+        # We use sed to replace slashes with dashes just in case (e.g. feature/api -> feature-api)
+        FINAL_TAG="${{ inputs.tag }}"
+        if [ -z "$FINAL_TAG" ]; then
+          FINAL_TAG="${{ github.ref_name }}"
+          FINAL_TAG=$(echo $FINAL_TAG | sed 's/\//-/g')
+        fi
+        echo "RESOLVED_TAG=$FINAL_TAG" >> $GITHUB_ENV
 
     - name: Log in to the Container registry
       if: github.ref == 'refs/heads/main'
@@ -25,4 +37,4 @@ runs:
       with:
         context: .
         push: ${{ github.ref == 'refs/heads/main' }}
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.tag }}
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.RESOLVED_TAG }}
