@@ -1,6 +1,10 @@
 name: Create Tag
-
 description: Create and push a new tag
+
+outputs:
+  tag:
+    description: The newly created version tag
+    value: ${{ steps.tag.outputs.tag }}
 
 runs:
   using: composite

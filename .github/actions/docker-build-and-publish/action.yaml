@@ -1,6 +1,10 @@
 name: Build
-
 description: Build and publish a Docker container
+
+inputs:
+  tag:
+    description: The version tag for the docker image
+    required: true
 
 runs:
   using: composite
@@ -15,20 +19,10 @@ runs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=raw,value=${{ steps.tag.outputs.tag }},enable=${{ github.ref == 'refs/heads/main' }}
-
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
       with:
         context: .
         push: ${{ github.ref == 'refs/heads/main' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.tag }}
