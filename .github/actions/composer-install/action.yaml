@@ -1,0 +1,16 @@
+name: Composer Install
+description: Install Composer dependencies
+
+inputs:
+  composer-path:
+    description: The path to the composer directory relative to the repository root
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Install Composer dependencies
+      shell: bash
+      run: |
+        docker run --rm -v $(pwd)/${{ inputs.composer-path }}:/src -w /src ghcr.io/simonjensen/docker-php8.3:0.0.3 composer install --no-progress --no-ansi --no-interaction --optimize-autoloader --prefer-dist
