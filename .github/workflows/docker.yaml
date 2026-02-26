@@ -4,8 +4,39 @@ on:
   workflow_call:
     inputs:
       image-name:
+        description: The name of the Docker image to build and release
         required: true
         type: string
+      create-tag:
+        description: Whether to create a new tag for the release
+        required: false
+        type: boolean
+        default: true
+      create-release-notes:
+        description: Whether to create release notes for the release
+        required: false
+        type: boolean
+        default: true
+      create-release:
+        description: Whether to create a new release
+        required: false
+        type: boolean
+        default: true
+      composer-install:
+        description: Whether to install Composer dependencies
+        required: false
+        type: boolean
+        default: false
+      composer-install-path:
+        description: The path to the composer directory relative to the repository root
+        required: false
+        type: string
+        default: src
+      docker-build-and-release:
+        description: Whether to build and release the Docker image
+        required: false
+        type: boolean
+        default: true
 
 env:
   REGISTRY: ghcr.io
@@ -23,27 +54,38 @@ jobs:
 
     steps:
       - name: Checkout repository
-        id: step-checkout
+        id: checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
 
       - name: Create Tag
-        id: step-create-tag
+        id: create-tag
+        if: ${{ inputs.create-tag }}
         uses: simonjensen/pipelines/.github/actions/create-tag@main
 
       - name: Create Release Notes
-        id: step-create-release-notes
+        id: create-release-notes
+        if: ${{ inputs.create-release-notes }}
         uses: simonjensen/pipelines/.github/actions/create-release-notes@main
 
       - name: Create Release
-        id: step-create-release
+        id: create-release
+        if: ${{ inputs.create-release }}
         uses: simonjensen/pipelines/.github/actions/create-release@main
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Composer Install
+        id: composer-install
+        if: ${{ inputs.composer-install }}
+        uses: simonjensen/pipelines/.github/actions/composer-install@main
+        with:
+          composer-path: ${{ inputs.composer-install-path }}
+
       - name: Docker Build And Release
-        id: step-docker-build-and-release
+        id: docker-build-and-release
+        if: ${{ inputs.docker-build-and-release }}
         uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
         with:
-          tag: ${{ steps.step-create-tag.outputs.tag }}
+          tag: ${{ steps.create-tag.outputs.tag }}
