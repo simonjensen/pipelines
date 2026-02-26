@@ -79,7 +79,7 @@ jobs:
       - name: Composer Install
         id: composer-install
         if: ${{ inputs.composer-install }}
-        uses: simonjensen/pipelines/.github/actions/composer-install@6-add-feature-toggling-for-steps-to-run
+        uses: simonjensen/pipelines/.github/actions/composer-install@main
         with:
           composer-path: ${{ inputs.composer-install-path }}
 
