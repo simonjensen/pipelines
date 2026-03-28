@@ -1,4 +1,4 @@
-name: Pipeline
+name: Actionlint
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
 
 jobs:
   actionlint:
-    name: Actionlint Workflow
-    uses: raven-actions/actionlint@v2
+    name: Actionlint
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Actionlint
+        id: actionlint
+        uses: raven-actions/actionlint@v2
