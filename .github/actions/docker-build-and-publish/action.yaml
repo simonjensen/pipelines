@@ -2,10 +2,13 @@ name: Build
 description: Build and publish a Docker container
 
 inputs:
+  github_token:
+    description: A valid GitHub token that allow for creation of releases
+    required: true
   tag:
     description: The version tag for the docker image
     required: false
-    default: ''
+    default: ""
 
 runs:
   using: composite
@@ -29,7 +32,7 @@ runs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.github_token }}
 
     - name: Build and push Docker image
       id: push
