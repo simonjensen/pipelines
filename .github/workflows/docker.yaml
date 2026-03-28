@@ -55,37 +55,37 @@ jobs:
     steps:
       - name: Checkout repository
         id: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
 
       - name: Create Tag
         id: create-tag
         if: ${{ inputs.create-tag }}
-        uses: simonjensen/pipelines/.github/actions/create-tag@main
+        uses: simonjensen/pipelines/.github/actions/create-tag@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
 
       - name: Create Release Notes
         id: create-release-notes
         if: ${{ inputs.create-release-notes }}
-        uses: simonjensen/pipelines/.github/actions/create-release-notes@main
+        uses: simonjensen/pipelines/.github/actions/create-release-notes@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
 
       - name: Create Release
         id: create-release
         if: ${{ inputs.create-release }}
-        uses: simonjensen/pipelines/.github/actions/create-release@main
+        uses: simonjensen/pipelines/.github/actions/create-release@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Composer Install
         id: composer-install
         if: ${{ inputs.composer-install }}
-        uses: simonjensen/pipelines/.github/actions/composer-install@main
+        uses: simonjensen/pipelines/.github/actions/composer-install@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
         with:
           composer-path: ${{ inputs.composer-install-path }}
 
       - name: Docker Build And Release
         id: docker-build-and-release
         if: ${{ inputs.docker-build-and-release }}
-        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
+        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
         with:
           tag: ${{ steps.create-tag.outputs.tag }}
