@@ -1,0 +1,12 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  actionlint:
+    name: Actionlint Workflow
+    uses: raven-actions/actionlint@v2
+
