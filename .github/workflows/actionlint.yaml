@@ -1,0 +1,22 @@
+name: Actionlint
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  actionlint:
+    name: Actionlint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+
+      - name: Actionlint
+        id: actionlint
+        uses: raven-actions/actionlint@v2
