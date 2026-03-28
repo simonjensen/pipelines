@@ -74,7 +74,7 @@ jobs:
         if: ${{ inputs.create-release }}
         uses: simonjensen/pipelines/.github/actions/create-release@main
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Composer Install
         id: composer-install
@@ -88,4 +88,5 @@ jobs:
         if: ${{ inputs.docker-build-and-release }}
         uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.create-tag.outputs.tag }}
