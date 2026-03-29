@@ -62,31 +62,31 @@ jobs:
       - name: Create Tag
         id: create-tag
         if: ${{ inputs.create-tag }}
-        uses: simonjensen/pipelines/.github/actions/create-tag@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
+        uses: simonjensen/pipelines/.github/actions/create-tag@6df69d3791122ef78ce92c5f6a62f7e79b8e3c59 # main
 
       - name: Create Release Notes
         id: create-release-notes
         if: ${{ inputs.create-release-notes }}
-        uses: simonjensen/pipelines/.github/actions/create-release-notes@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
+        uses: simonjensen/pipelines/.github/actions/create-release-notes@6df69d3791122ef78ce92c5f6a62f7e79b8e3c59 # main
 
       - name: Create Release
         id: create-release
         if: ${{ inputs.create-release }}
-        uses: simonjensen/pipelines/.github/actions/create-release@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
+        uses: simonjensen/pipelines/.github/actions/create-release@6df69d3791122ef78ce92c5f6a62f7e79b8e3c59 # main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Composer Install
         id: composer-install
         if: ${{ inputs.composer-install }}
-        uses: simonjensen/pipelines/.github/actions/composer-install@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
+        uses: simonjensen/pipelines/.github/actions/composer-install@6df69d3791122ef78ce92c5f6a62f7e79b8e3c59 # main
         with:
           composer-path: ${{ inputs.composer-install-path }}
 
       - name: Docker Build And Release
         id: docker-build-and-release
         if: ${{ inputs.docker-build-and-release }}
-        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@70c5e65e09f8c5959ddbb5cf721826ca5a772405 # main
+        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@6df69d3791122ef78ce92c5f6a62f7e79b8e3c59 # main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.create-tag.outputs.tag }}
