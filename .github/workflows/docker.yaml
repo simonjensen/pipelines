@@ -96,7 +96,7 @@ jobs:
       - name: Run phpunittest
         id: phpunittests
         if: ${{ inputs.phpunittest }}
-        uses: simonjensen/pipelines/.github/actions/phpunittest@phpunittest
+        uses: simonjensen/pipelines/.github/actions/phpunittest@main
         with:
           src-path: ${{ inputs.phpunittest-src-path }}
 
