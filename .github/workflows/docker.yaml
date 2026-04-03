@@ -32,6 +32,16 @@ on:
         required: false
         type: string
         default: src
+      phpunittest:
+        description: Whether to run a phpunittest suite
+        required: false
+        type: boolean
+        default: false
+      phpunittest-src-path:
+        description: Path to the directory containing all PHP code, relative to the repository root
+        required: false
+        type: string
+        default: src
       docker-build-and-release:
         description: Whether to build and release the Docker image
         required: false
@@ -82,6 +92,13 @@ jobs:
         uses: simonjensen/pipelines/.github/actions/composer-install@main
         with:
           composer-path: ${{ inputs.composer-install-path }}
+
+      - name: Run phpunittest
+        id: phpunittests
+        if: ${{ inputs.phpunittest }}
+        uses: simonjensen/pipelines/.github/actions/phpunittest@main
+        with:
+          src-path: ${{ inputs.phpunittest-src-path }}
 
       - name: Docker Build And Release
         id: docker-build-and-release

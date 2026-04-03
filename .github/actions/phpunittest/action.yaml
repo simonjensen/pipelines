@@ -1,0 +1,16 @@
+name: PHPUnittest
+description: Run PHPUnittest
+
+inputs:
+  src-path:
+    description: Path to the directory containing all PHP code, relative to the repository root
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Run PHPUnittest
+      shell: bash
+      run: |
+        docker run --rm -v $(pwd)/${{ inputs.src-path }}:/src -w /src ghcr.io/simonjensen/docker-php8.3:0.0.3 ./vendor/bin/phpunit tests/
