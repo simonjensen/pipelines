@@ -41,7 +41,7 @@ on:
         description: Path to the directory containing all PHP code, relative to the repository root
         required: false
         type: string
-        default: src/tests
+        default: src
       docker-build-and-release:
         description: Whether to build and release the Docker image
         required: false
