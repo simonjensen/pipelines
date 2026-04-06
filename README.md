@@ -26,7 +26,7 @@ These are the building blocks used internally by the reusable workflows. They ca
 | Create Tag | `actions/create-tag` | Computes the next semver version via GitVersion and pushes a git tag |
 | Create Release Notes | `actions/create-release-notes` | Generates a `changelog.md` from commits between the last two tags |
 | Create Release | `actions/create-release` | Creates a GitHub Release from the latest tag and `changelog.md` |
-| Docker Build And Publish | `actions/docker-build-and-publish` | Builds the Docker image; pushes to `ghcr.io` only when on `main` and a token is provided |
+| Docker Build And Publish | `actions/docker-build-and-publish` | Builds the Docker image; pushes to `ghcr.io` only when a `github_token` input is provided |
 
 ---
 

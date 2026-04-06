@@ -191,7 +191,7 @@ jobs:
       image-name: my-image
 ```
 
-The `if: github.ref == 'refs/heads/main'` guards inside the composite actions remain in place as a second line of defence — release/push steps will not run if the workflow is triggered from a non-main branch.
+Registry login and image push in the `docker-build-and-publish` action are gated on the `github_token` input being non-empty — pass the token only when you intend to publish.
 
 ### Feature flags
 
