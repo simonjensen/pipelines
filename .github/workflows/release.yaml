@@ -1,4 +1,4 @@
-name: Docker Workflow
+name: Release Workflow
 
 on:
   workflow_call:
@@ -23,7 +23,7 @@ on:
         type: boolean
         default: true
       composer-install:
-        description: Whether to install Composer dependencies
+        description: Whether to install Composer dependencies before building
         required: false
         type: boolean
         default: false
@@ -33,7 +33,7 @@ on:
         type: string
         default: src
       phpunittest:
-        description: Whether to run a phpunittest suite
+        description: Whether to run a phpunittest suite before releasing
         required: false
         type: boolean
         default: false
@@ -43,7 +43,7 @@ on:
         type: string
         default: src
       docker-build-and-release:
-        description: Whether to build and release the Docker image
+        description: Whether to build and push the Docker image
         required: false
         type: boolean
         default: true
