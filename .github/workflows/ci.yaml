@@ -1,0 +1,73 @@
+name: CI Workflow
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: The name of the Docker image to build (required if docker-build is true)
+        required: false
+        type: string
+        default: ""
+      composer-install:
+        description: Whether to install Composer dependencies
+        required: false
+        type: boolean
+        default: false
+      composer-install-path:
+        description: The path to the composer directory relative to the repository root
+        required: false
+        type: string
+        default: src
+      phpunittest:
+        description: Whether to run a phpunittest suite
+        required: false
+        type: boolean
+        default: false
+      phpunittest-src-path:
+        description: Path to the directory containing all PHP code, relative to the repository root
+        required: false
+        type: string
+        default: src
+      docker-build:
+        description: Whether to build the Docker image (build only, no push)
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ inputs.image-name }}
+
+jobs:
+  pipeline:
+    name: Pipeline
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+
+      - name: Composer Install
+        id: composer-install
+        if: ${{ inputs.composer-install }}
+        uses: simonjensen/pipelines/.github/actions/composer-install@main
+        with:
+          composer-path: ${{ inputs.composer-install-path }}
+
+      - name: Run phpunittest
+        id: phpunittests
+        if: ${{ inputs.phpunittest }}
+        uses: simonjensen/pipelines/.github/actions/phpunittest@main
+        with:
+          src-path: ${{ inputs.phpunittest-src-path }}
+
+      - name: Docker Build
+        id: docker-build
+        if: ${{ inputs.docker-build }}
+        uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main

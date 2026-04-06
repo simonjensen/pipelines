@@ -1,10 +1,11 @@
-name: Build
+name: Build Docker container
 description: Build and publish a Docker container
 
 inputs:
   github_token:
-    description: A valid GitHub token that allow for creation of releases
-    required: true
+    description: A valid GitHub token that allows for pushing to the container registry
+    required: false
+    default: ""
   tag:
     description: The version tag for the docker image
     required: false
