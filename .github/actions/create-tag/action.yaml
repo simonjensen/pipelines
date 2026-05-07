@@ -17,7 +17,7 @@ runs:
       id: tag
       shell: bash
       run: |
-        nextVersion=$(docker run --rm -v $(pwd):/repo gittools/gitversion:6.4.0-alpine.3.21-9.0 /repo /showvariable MajorMinorPatch)
+        nextVersion=$(docker run --rm -v $(pwd):/repo gittools/gitversion:6.7.0-alpine.3.23-10.0 /repo /showvariable MajorMinorPatch)
         git tag $nextVersion
         git push --tags
         echo "tag=$nextVersion" >> $GITHUB_OUTPUT
