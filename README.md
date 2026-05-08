@@ -8,9 +8,9 @@
 
 Consumer repos reference these via `uses: simonjensen/pipelines/.github/workflows/<name>@main`.
 
-| Workflow | File | Trigger in consumer | Purpose |
-|---|---|---|---|
-| CI Workflow | `ci.yaml` | `push` / `pull_request` | Runs Composer install, PHPUnit tests, and a Docker build (no push) to verify the image builds cleanly |
+| Workflow         | File           | Trigger in consumer          | Purpose                                                                                                                                |
+| ---------------- | -------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| CI Workflow      | `ci.yaml`      | `push` / `pull_request`      | Runs Composer install, PHPUnit tests, and a Docker build (no push) to verify the image builds cleanly                                  |
 | Release Workflow | `release.yaml` | `workflow_dispatch` (manual) | Computes the next semver tag, creates a GitHub Release with generated release notes, and builds + pushes the Docker image to `ghcr.io` |
 
 ---
@@ -19,14 +19,13 @@ Consumer repos reference these via `uses: simonjensen/pipelines/.github/workflow
 
 These are the building blocks used internally by the reusable workflows. They can also be called directly from consumer workflows if finer control is needed.
 
-| Action | Directory | Purpose |
-|---|---|---|
-| Composer Install | `actions/composer-install` | Installs PHP dependencies via Composer inside Docker |
-| PHPUnit | `actions/phpunittest` | Runs the PHPUnit test suite inside Docker |
-| Create Tag | `actions/create-tag` | Computes the next semver version via GitVersion and pushes a git tag |
-| Create Release Notes | `actions/create-release-notes` | Generates a `changelog.md` from commits between the last two tags |
-| Create Release | `actions/create-release` | Creates a GitHub Release from the latest tag and `changelog.md` |
+| Action                   | Directory                          | Purpose                                                                                   |
+| ------------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| Composer Install         | `actions/composer-install`         | Installs PHP dependencies via Composer inside Docker                                      |
+| PHPUnit                  | `actions/phpunittest`              | Runs the PHPUnit test suite inside Docker                                                 |
 | Docker Build And Publish | `actions/docker-build-and-publish` | Builds the Docker image; pushes to `ghcr.io` only when a `github_token` input is provided |
+
+Semver tagging and GitHub Release creation are handled directly by [`huggingface/semver-release-action`](https://github.com/huggingface/semver-release-action) in `release.yaml` — there are no internal composite actions for those steps.
 
 ---
 

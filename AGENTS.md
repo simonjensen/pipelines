@@ -1,245 +1,136 @@
 # AGENTS.md — Coding Agent Reference
 
-This repository is a **reusable GitHub Actions pipeline library**. It contains no application source code. All files are YAML (composite actions and reusable workflows), JSON, and Markdown. Changes here affect all consumer repositories that reference `simonjensen/pipelines/.github/...@main`.
+This repo is a **reusable GitHub Actions pipeline library** — YAML only, no application code. Changes to `main` immediately affect all consumer repositories that reference `simonjensen/pipelines/.github/...@main`.
 
 ---
 
-## Repository Layout
+## Actual Repository Layout
 
 ```
-pipelines/
-├── .github/
-│   ├── actions/                  # Composite actions (one per concern)
-│   │   ├── composer-install/action.yaml
-│   │   ├── create-release-notes/action.yaml
-│   │   ├── create-release/action.yaml
-│   │   ├── create-tag/action.yaml
-│   │   ├── docker-build-and-publish/action.yaml
-│   │   └── phpunittest/action.yaml
-│   └── workflows/
-│       ├── actionlint.yaml       # CI: lints all Actions YAML on every push
-│       ├── ci.yaml               # Reusable workflow: build + test (no release)
-│       └── release.yaml          # Reusable workflow: tag + release + Docker push
-├── renovate.json                 # Renovate Bot config (auto-updates action versions)
-└── README.md
+.github/
+  actions/
+    composer-install/action.yaml       # Docker-based Composer install
+    phpunittest/action.yaml            # Docker-based PHPUnit runner
+    docker-build-and-publish/action.yaml  # Docker build + optional push
+  workflows/
+    actionlint.yaml   # CI: lints all Actions YAML on every push
+    ci.yaml           # Reusable workflow: build + test (no release)
+    release.yaml      # Reusable workflow: semver release + Docker push
+renovate.json         # Auto-updates external action pins via Renovate
 ```
+
+> The old AGENTS.md listed `create-release-notes`, `create-release`, and `create-tag` actions. These no longer exist. `release.yaml` now uses `huggingface/semver-release-action@v1.1.1` directly to handle tagging and release creation.
 
 ---
 
-## Build / Lint / Test Commands
+## Linting (only automated check in this repo)
 
-### Linting (the only automated check run on this repo itself)
+CI runs `raven-actions/actionlint@v2` on every push to any branch.
 
-Linting is handled by `actionlint` and runs automatically via GitHub Actions on every push to any branch. There is no local Makefile or task runner.
-
-To lint locally using Docker (mirrors CI exactly):
-
+Lint locally (mirrors CI exactly):
 ```bash
-docker run --rm -v "$(pwd):/repo" --workdir /repo \
-  rhysd/actionlint:latest
+# All files
+docker run --rm -v "$(pwd):/repo" --workdir /repo rhysd/actionlint:latest
+
+# Single file
+docker run --rm -v "$(pwd):/repo" --workdir /repo rhysd/actionlint:latest .github/actions/composer-install/action.yaml
 ```
 
-To lint a single file:
-
+Or with `actionlint` installed directly:
 ```bash
-docker run --rm -v "$(pwd):/repo" --workdir /repo \
-  rhysd/actionlint:latest .github/actions/composer-install/action.yaml
-```
-
-Alternatively, install `actionlint` directly and run:
-
-```bash
-actionlint                                          # lint everything
-actionlint .github/actions/composer-install/action.yaml  # lint one file
-```
-
-### PHPUnit (for consumer projects, via the phpunittest composite action)
-
-The `phpunittest` action runs tests inside Docker in a consumer project. To replicate it manually:
-
-```bash
-# Run full test suite
-docker run --rm \
-  -v "$(pwd)/<src-path>:/src" \
-  -w /src \
-  ghcr.io/simonjensen/docker-php8.3:0.0.3 \
-  ./vendor/bin/phpunit tests/
-
-# Run a single test class or method (append --filter)
-docker run --rm \
-  -v "$(pwd)/<src-path>:/src" \
-  -w /src \
-  ghcr.io/simonjensen/docker-php8.3:0.0.3 \
-  ./vendor/bin/phpunit tests/ --filter MyTestClassName::testMethodName
-```
-
-### Composer (for consumer projects, via the composer-install composite action)
-
-```bash
-docker run --rm \
-  -v "$(pwd)/<composer-path>:/src" \
-  -w /src \
-  ghcr.io/simonjensen/docker-php8.3:0.0.3 \
-  composer install --no-progress --no-ansi --no-interaction \
-    --optimize-autoloader --prefer-dist
+actionlint
+actionlint .github/actions/composer-install/action.yaml
 ```
 
 ---
 
-## YAML Style Guidelines
+## Key Implementation Details
 
-### File and directory naming
+### docker-build-and-publish — push gate
 
-- All file names: `kebab-case` lowercase (`action.yaml`, `docker-build-and-publish/`)
-- Use `action.yaml` (not `action.yml`) for composite actions
-- Each composite action lives in its own directory under `.github/actions/<kebab-name>/`
+Push to `ghcr.io` is gated on `github_token` input being non-empty:
+```yaml
+push: ${{ inputs.github_token != '' }}
+```
+In `ci.yaml` the action is called without a token (build-only). In `release.yaml` `secrets.GITHUB_TOKEN` is passed, enabling push.
 
-### `name:` fields
+### docker-build-and-publish — tag resolution
 
-- Workflows and actions: Title Case with spaces (`"Composer Install"`, `"Docker Build And Release"`)
-- Step `id:` values: `kebab-case` (`checkout`, `create-tag`, `docker-build-and-release`)
+If `tag` input is empty, the action falls back to `github.ref_name` with slashes replaced by dashes (e.g. `feature/foo` → `feature-foo`). Set `REGISTRY` and `IMAGE_NAME` env vars at the workflow level before calling this action — the action reads them from `${{ env.REGISTRY }}` and `${{ env.IMAGE_NAME }}`.
 
-### Input naming
+### release.yaml — semver and release creation
 
-- Path and string inputs: `kebab-case` (`src-path`, `composer-path`)
-- Token/secret inputs: `snake_case` (`github_token`) — follow GitHub Actions conventions
-- Boolean feature-flag inputs: `kebab-case`, with sensible defaults
-  - Core/always-on steps default to `true`
-  - Optional steps default to `false`
-- All inputs must either be `required: true` or have an explicit `default:` — never leave an input optional without a fallback
+`release.yaml` does **not** use internal composite actions for tagging or release notes. It calls `huggingface/semver-release-action@v1.1.1` directly, which computes the next semver tag, creates a GitHub Release, and exposes a `tag` output consumed by the Docker step:
+```yaml
+tag: ${{ steps.create-release.outputs.tag }}
+```
 
-### Output naming
+### ci.yaml — input names for path overrides
 
-- `kebab-case` (`tag`)
+Default paths for both workflows are `src`. Override with:
+- `composer-install-path` (not `composer-path`)
+- `phpunittest-src-path` (not `src-path`)
 
-### Environment variables
+These differ from the input names on the underlying composite actions.
 
-- `SCREAMING_SNAKE_CASE` for all env vars exported to `$GITHUB_ENV` or `$GITHUB_OUTPUT` (`REGISTRY`, `IMAGE_NAME`, `FINAL_TAG`)
-- Local Bash variables within `run:` scripts: `camelCase` (`nextVersion`, `resolvedTag`)
+### release.yaml — docker flag name
 
----
-
-## Inline Bash Script Style
-
-- Keep `run:` scripts minimal and focused
-- Do not add `set -e` or `set -o pipefail` — GitHub Actions fails steps on non-zero exit by default
-- Do not add explicit error traps or `|| exit 1` unless truly necessary
-- Prefer writing computed values to `$GITHUB_OUTPUT` or `$GITHUB_ENV` using the `>> "$GITHUB_OUTPUT"` heredoc syntax (not deprecated `::set-output`)
-- Use `${{ inputs.<name> }}` for action inputs inside `run:` scripts, not shell variable assignment
+The flag is `docker-build-and-release` (not `docker-build` as in `ci.yaml`), and it defaults to `true`.
 
 ---
 
-## Action Reference Conventions (`uses:`)
+## YAML Conventions
 
-- **External actions**: pin to a major version tag, no digest pinning
+- File extension: `action.yaml` not `action.yml`
+- File/dir names: `kebab-case`
+- Action/workflow `name:`: Title Case
+- Step `id:`: `kebab-case`
+- String/path inputs: `kebab-case`; token/secret inputs: `snake_case` (`github_token`)
+- All inputs: `required: true` or explicit `default:` — never leave optional without fallback
+- Env vars written to `$GITHUB_ENV` / `$GITHUB_OUTPUT`: `SCREAMING_SNAKE_CASE`
+- Local Bash vars in `run:` blocks: `camelCase`
+- No `set -e`, no `|| exit 1` — GitHub Actions fails on non-zero exit by default
+- Use `>> "$GITHUB_OUTPUT"` heredoc syntax, not deprecated `::set-output`
+
+---
+
+## MD Conventions
+
+- When adding or updating tables, make sure the columns are spaced to align visually even when viewing the raw markdown
+
+---
+
+## Action Reference Conventions
+
+- External actions: pin to major version tag, no digest pins
   ```yaml
   uses: actions/checkout@v6
   uses: docker/build-push-action@v7
   ```
-- **Internal (self-referencing) actions**: always pin to `main`
+- Internal self-references: always `@main`
   ```yaml
-  uses: simonjensen/pipelines/.github/actions/create-tag@main
+  uses: simonjensen/pipelines/.github/actions/composer-install@main
   ```
-- Renovate Bot (`renovate.json`) manages version updates automatically — do not manually update external action versions; let Renovate open PRs
-- `"pinDigests": false` is intentional — do not add digest pins
-
----
-
-## Architectural Patterns
-
-### Composite actions vs. reusable workflows
-
-- **Composite actions** (`.github/actions/*/action.yaml`): one per discrete concern (tag, release notes, release, composer, phpunit, docker build). Keep each action single-purpose.
-- **Reusable workflows** (`.github/workflows/ci.yaml` and `.github/workflows/release.yaml`): orchestrate composite actions with feature-flag boolean inputs so consumers can enable/disable stages without forking.
-
-### CI vs. CD split
-
-There are two separate reusable workflows that consumer repos wire up independently:
-
-| Workflow | Consumer trigger | Purpose |
-|---|---|---|
-| `ci.yaml` | Every push / pull request | Composer install, PHPUnit, Docker build (no push) |
-| `release.yaml` | `workflow_dispatch` (manual) | Tag, release notes, GitHub Release, Docker build + push |
-
-Consumer repos call them like this:
-
-```yaml
-# .github/workflows/ci.yml — runs on every push and PR
-on: [push, pull_request]
-jobs:
-  ci:
-    uses: simonjensen/pipelines/.github/workflows/ci.yaml@main
-    with:
-      composer-install: true
-      phpunittest: true
-      docker-build: true
-      image-name: my-image
-    # permissions: contents: read is the default — no block needed
-
-# .github/workflows/release.yml — triggered manually to cut a release
-on:
-  workflow_dispatch:
-jobs:
-  release:
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-    uses: simonjensen/pipelines/.github/workflows/release.yaml@main
-    secrets: inherit
-    with:
-      image-name: my-image
-```
-
-Registry login and image push in the `docker-build-and-publish` action are gated on the `github_token` input being non-empty — pass the token only when you intend to publish.
-
-### Feature flags
-
-All optional pipeline stages are controlled by boolean inputs on the orchestrating workflows. New stages should follow the same pattern:
-
-```yaml
-inputs:
-  my-new-stage:
-    type: boolean
-    default: false
-```
-
-And guarded in steps:
-
-```yaml
-- if: ${{ inputs.my-new-stage }}
-  uses: simonjensen/pipelines/.github/actions/my-new-stage@main
-```
-
-### Tooling via Docker
-
-All heavy tooling (PHP, Composer, PHPUnit, GitVersion) runs inside Docker containers via `docker run --rm`. This keeps the runner dependency-free and makes tool versions explicit. New tooling should follow the same pattern — do not install tools directly onto the runner with `apt-get` or similar.
-
-### Container registry
-
-All images (tooling and output) use `ghcr.io` (GitHub Container Registry). Do not introduce other registries.
-
----
-
-## Commit Message Style
-
-Follow Conventional Commits:
-
-```
-feat: add support for multi-platform Docker builds
-fix: resolve tag duplication on re-runs
-chore: update actions/checkout to v6
-chore(deps): bump docker/build-push-action from v6 to v7
-```
-
-Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `ci`
+- Do not manually bump external action versions — Renovate opens PRs. `"pinDigests": false` is intentional.
 
 ---
 
 ## Adding a New Composite Action
 
-1. Create `.github/actions/<kebab-name>/action.yaml`
-2. Set `name:`, `description:`, `inputs:`, `outputs:` (if any), and `runs.using: composite`
-3. Add a boolean input to the appropriate reusable workflow (`ci.yaml` for build/test steps, `release.yaml` for release steps) to expose it as a feature flag
-4. Call it from the workflow with `if: ${{ inputs.<flag> }}` and `uses: simonjensen/pipelines/.github/actions/<name>@main`
-5. Document the new action in `README.md`
+1. Create `.github/actions/<kebab-name>/action.yaml` with `runs.using: composite`
+2. Add a boolean feature-flag input (default `false`) to `ci.yaml` or `release.yaml`
+3. Guard the step: `if: ${{ inputs.<flag> }}`
+4. Reference with `uses: simonjensen/pipelines/.github/actions/<name>@main`
+5. Update `README.md`
+
+All tooling runs inside Docker (`docker run --rm`). Do not install tools on the runner with `apt-get`.
+
+---
+
+## Commit Style
+
+Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `ci:`
+```
+feat: add multi-platform Docker build support
+chore(deps): bump docker/build-push-action from v6 to v7
+```
