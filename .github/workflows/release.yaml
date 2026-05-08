@@ -4,24 +4,10 @@ on:
   workflow_call:
     inputs:
       image-name:
-        description: The name of the Docker image to build and release
-        required: true
+        description: The name of the Docker image to build and release (required if docker-build-and-release is true)
+        required: false
         type: string
-      create-tag:
-        description: Whether to create a new tag for the release
-        required: false
-        type: boolean
-        default: true
-      create-release-notes:
-        description: Whether to create release notes for the release
-        required: false
-        type: boolean
-        default: true
-      create-release:
-        description: Whether to create a new release
-        required: false
-        type: boolean
-        default: true
+        default: ""
       composer-install:
         description: Whether to install Composer dependencies before building
         required: false
@@ -69,23 +55,6 @@ jobs:
         with:
           fetch-depth: 0 # https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
 
-      - name: Create Tag
-        id: create-tag
-        if: ${{ inputs.create-tag }}
-        uses: simonjensen/pipelines/.github/actions/create-tag@main
-
-      - name: Create Release Notes
-        id: create-release-notes
-        if: ${{ inputs.create-release-notes }}
-        uses: simonjensen/pipelines/.github/actions/create-release-notes@main
-
-      - name: Create Release
-        id: create-release
-        if: ${{ inputs.create-release }}
-        uses: simonjensen/pipelines/.github/actions/create-release@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Composer Install
         id: composer-install
         if: ${{ inputs.composer-install }}
@@ -100,10 +69,16 @@ jobs:
         with:
           src-path: ${{ inputs.phpunittest-src-path }}
 
+      - name: Create Release
+        id: create-release
+        uses: huggingface/semver-release-action@v1.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Docker Build And Release
         id: docker-build-and-release
         if: ${{ inputs.docker-build-and-release }}
         uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.create-tag.outputs.tag }}
+          tag: ${{ steps.create-release.outputs.tag }}
