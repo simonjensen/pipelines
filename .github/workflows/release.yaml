@@ -77,7 +77,7 @@ jobs:
 
       - name: Docker Build And Release
         id: docker-build-and-release
-        if: ${{ inputs.docker-build-and-release }}
+        if: ${{ inputs.docker-build-and-release && steps.create-release.outputs.released == 'true' }}
         uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
