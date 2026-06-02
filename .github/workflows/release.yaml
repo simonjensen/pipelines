@@ -47,7 +47,7 @@ jobs:
       contents: write
       packages: write
       id-token: write
-      pull-requests: read
+      pull-requests: write
 
     steps:
       - name: Checkout repository
