@@ -75,6 +75,7 @@ jobs:
         uses: huggingface/semver-release-action@v1.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          commitAnalyzerPluginOpts: '{"releaseRules": [{"type": "chore", "scope": "deps", "release": "patch"}]}'
 
       - name: Docker Build And Release
         id: docker-build-and-release
