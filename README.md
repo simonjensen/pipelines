@@ -27,6 +27,8 @@ These are the building blocks used internally by the reusable workflows. They ca
 
 Semver tagging and GitHub Release creation are handled directly by [`huggingface/semver-release-action`](https://github.com/huggingface/semver-release-action) in `release.yaml` — there are no internal composite actions for those steps.
 
+Release notes are generated from [Conventional Commits](https://www.conventionalcommits.org/) via `@semantic-release/release-notes-generator`. If the consumer repo has no semantic-release config of its own (`.releaserc*` / `release.config.*`), `release.yaml` seeds a default `.releaserc.json` using the `conventionalcommits` preset with `feat`, `fix`, `perf`, `revert`, `chore`, `docs`, `refactor`, `build`, and `ci` commits shown as their own sections — matching the fact that `chore:` commits already trigger patch releases. Consumers can fully override the notes formatting by committing their own `.releaserc.json` (or `release.config.js`) with a `generateNotes` key.
+
 ---
 
 ## Consumer Wiring

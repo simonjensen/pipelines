@@ -70,6 +70,34 @@ jobs:
         with:
           src-path: ${{ inputs.phpunittest-src-path }}
 
+      - name: Ensure default release notes configuration
+        id: release-notes-config
+        if: ${{ hashFiles('.releaserc', '.releaserc.json', '.releaserc.yaml', '.releaserc.yml', '.releaserc.js', '.releaserc.cjs', 'release.config.js', 'release.config.cjs') == '' }}
+        shell: bash
+        run: |
+          cat <<'EOF' > .releaserc.json
+          {
+            "generateNotes": {
+              "preset": "conventionalcommits",
+              "presetConfig": {
+                "types": [
+                  { "type": "feat", "section": "Features" },
+                  { "type": "fix", "section": "Bug Fixes" },
+                  { "type": "perf", "section": "Performance Improvements" },
+                  { "type": "revert", "section": "Reverts" },
+                  { "type": "chore", "section": "Chores" },
+                  { "type": "docs", "section": "Documentation" },
+                  { "type": "refactor", "section": "Code Refactoring" },
+                  { "type": "build", "section": "Build System" },
+                  { "type": "ci", "section": "Continuous Integration" },
+                  { "type": "style", "hidden": true },
+                  { "type": "test", "hidden": true }
+                ]
+              }
+            }
+          }
+          EOF
+
       - name: Create Release
         id: create-release
         uses: huggingface/semver-release-action@v1.1.1
