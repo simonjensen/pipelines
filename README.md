@@ -34,7 +34,7 @@ Versions and release notes are derived from [Conventional Commits](https://www.c
 - makes `chore:` commits trigger a patch release
 - shows `feat`, `fix`, `perf`, `revert`, `chore`, `docs`, `refactor`, `build`, and `ci` commits as their own release notes sections
 
-Consumers can override this by committing their own `.releaserc.json` (or `release.config.js`). A consumer config replaces the default entirely, so it must set `branches` and list its `plugins` (including `@semantic-release/github`). The only package the action installs beyond semantic-release's default plugins is `conventional-changelog-conventionalcommits`.
+Consumers can override this by committing their own `.releaserc.json` (or `release.config.js`). A consumer config replaces the default entirely, so it must set `branches` and list its `plugins`, including `@semantic-release/github` with `"failCommentCondition": false` (the workflow doesn't grant the `issues` permission that plugin otherwise needs). The only package the action installs beyond semantic-release's default plugins is `conventional-changelog-conventionalcommits`.
 
 ---
 
