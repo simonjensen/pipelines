@@ -19,7 +19,7 @@ This repo is a **reusable GitHub Actions pipeline library** — YAML only, no ap
 renovate.json         # Auto-updates external action pins via Renovate
 ```
 
-> The old AGENTS.md listed `create-release-notes`, `create-release`, and `create-tag` actions. These no longer exist. `release.yaml` now uses `huggingface/semver-release-action@v1.1.1` directly to handle tagging and release creation.
+> The old AGENTS.md listed `create-release-notes`, `create-release`, and `create-tag` actions. These no longer exist. `release.yaml` now uses `cycjimmy/semantic-release-action@v6` directly to handle tagging and release creation.
 
 ---
 
@@ -60,10 +60,19 @@ If `tag` input is empty, the action falls back to `github.ref_name` with slashes
 
 ### release.yaml — semver and release creation
 
-`release.yaml` does **not** use internal composite actions for tagging or release notes. It calls `huggingface/semver-release-action@v1.1.1` directly, which computes the next semver tag, creates a GitHub Release, and exposes a `tag` output consumed by the Docker step:
+`release.yaml` does **not** use internal composite actions for tagging or release notes. It calls `cycjimmy/semantic-release-action@v6` directly, which runs semantic-release to compute the next semver tag and create a GitHub Release, and exposes outputs consumed by the Docker step:
 ```yaml
-tag: ${{ steps.create-release.outputs.tag }}
+if: ${{ inputs.docker-build-and-release && steps.create-release.outputs.new_release_published == 'true' }}
+tag: ${{ steps.create-release.outputs.new_release_git_tag }}
 ```
+
+### release.yaml — semantic-release config
+
+The action takes no plugin options; all semantic-release config comes from a config file in the consumer repo. If the consumer has none, the `release-config` step seeds `.releaserc.json`. When changing it:
+- Keep `plugins` listed explicitly. Without it semantic-release loads its defaults, including `@semantic-release/npm`, which fails in repos without a `package.json`.
+- Any npm package the config references that is not a default semantic-release plugin (e.g. the `conventional-changelog-conventionalcommits` preset) must also be listed in the action's `extra_plugins` input, otherwise the release fails with `Cannot find module`.
+- `semantic_version` and the `extra_plugins` versions are pinned to a major version. Renovate only manages `uses:` references here, so bump these manually.
+- The `conventional-changelog-conventionalcommits` major must match the `conventional-changelog-writer` major that `@semantic-release/release-notes-generator` depends on. Preset v9 works with writer v8 (release-notes-generator 14 / semantic-release 25). Preset v10 requires writer v9 and fails with `Missing helper: "conventional-changelog-conventionalcommits requires conventional-changelog-writer@9 or newer"`.
 
 ### ci.yaml — input names for path overrides
 

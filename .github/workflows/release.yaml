@@ -70,46 +70,66 @@ jobs:
         with:
           src-path: ${{ inputs.phpunittest-src-path }}
 
-      - name: Ensure default release notes configuration
-        id: release-notes-config
+      # Every package referenced here that is not a default semantic-release plugin must also be listed in
+      # the Create Release step's extra_plugins, or semantic-release fails with "Cannot find module".
+      - name: Ensure default release configuration
+        id: release-config
         if: ${{ hashFiles('.releaserc', '.releaserc.json', '.releaserc.yaml', '.releaserc.yml', '.releaserc.js', '.releaserc.cjs', 'release.config.js', 'release.config.cjs') == '' }}
         shell: bash
         run: |
           cat <<'EOF' > .releaserc.json
           {
-            "generateNotes": {
-              "preset": "conventionalcommits",
-              "presetConfig": {
-                "types": [
-                  { "type": "feat", "section": "Features" },
-                  { "type": "fix", "section": "Bug Fixes" },
-                  { "type": "perf", "section": "Performance Improvements" },
-                  { "type": "revert", "section": "Reverts" },
-                  { "type": "chore", "section": "Chores" },
-                  { "type": "docs", "section": "Documentation" },
-                  { "type": "refactor", "section": "Code Refactoring" },
-                  { "type": "build", "section": "Build System" },
-                  { "type": "ci", "section": "Continuous Integration" },
-                  { "type": "style", "hidden": true },
-                  { "type": "test", "hidden": true }
-                ]
-              }
-            }
+            "branches": ["main"],
+            "plugins": [
+              [
+                "@semantic-release/commit-analyzer",
+                {
+                  "preset": "conventionalcommits",
+                  "releaseRules": [
+                    { "type": "chore", "release": "patch" }
+                  ]
+                }
+              ],
+              [
+                "@semantic-release/release-notes-generator",
+                {
+                  "preset": "conventionalcommits",
+                  "presetConfig": {
+                    "types": [
+                      { "type": "feat", "section": "Features" },
+                      { "type": "fix", "section": "Bug Fixes" },
+                      { "type": "perf", "section": "Performance Improvements" },
+                      { "type": "revert", "section": "Reverts" },
+                      { "type": "chore", "section": "Chores" },
+                      { "type": "docs", "section": "Documentation" },
+                      { "type": "refactor", "section": "Code Refactoring" },
+                      { "type": "build", "section": "Build System" },
+                      { "type": "ci", "section": "Continuous Integration" },
+                      { "type": "style", "hidden": true },
+                      { "type": "test", "hidden": true }
+                    ]
+                  }
+                }
+              ],
+              "@semantic-release/github"
+            ]
           }
           EOF
 
       - name: Create Release
         id: create-release
-        uses: huggingface/semver-release-action@v1.1.1
+        uses: cycjimmy/semantic-release-action@v6
         with:
-          commitAnalyzerPluginOpts: '{"releaseRules": [{"type": "chore", "release": "patch"}]}'
+          semantic_version: 25
+          extra_plugins: |
+            conventional-changelog-conventionalcommits@9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker Build And Release
         id: docker-build-and-release
-        if: ${{ inputs.docker-build-and-release && steps.create-release.outputs.released == 'true' }}
+        if: ${{ inputs.docker-build-and-release && steps.create-release.outputs.new_release_published == 'true' }}
         uses: simonjensen/pipelines/.github/actions/docker-build-and-publish@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.create-release.outputs.tag }}
+          tag: ${{ steps.create-release.outputs.new_release_git_tag }}

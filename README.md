@@ -25,9 +25,16 @@ These are the building blocks used internally by the reusable workflows. They ca
 | PHPUnit                  | `actions/phpunittest`              | Runs the PHPUnit test suite inside Docker                                                 |
 | Docker Build And Publish | `actions/docker-build-and-publish` | Builds the Docker image; pushes to `ghcr.io` only when a `github_token` input is provided |
 
-Semver tagging and GitHub Release creation are handled directly by [`huggingface/semver-release-action`](https://github.com/huggingface/semver-release-action) in `release.yaml` — there are no internal composite actions for those steps.
+Semver tagging and GitHub Release creation are handled directly by [`cycjimmy/semantic-release-action`](https://github.com/cycjimmy/semantic-release-action) (which runs [semantic-release](https://github.com/semantic-release/semantic-release)) in `release.yaml` — there are no internal composite actions for those steps.
 
-Release notes are generated from [Conventional Commits](https://www.conventionalcommits.org/) via `@semantic-release/release-notes-generator`. If the consumer repo has no semantic-release config of its own (`.releaserc*` / `release.config.*`), `release.yaml` seeds a default `.releaserc.json` using the `conventionalcommits` preset with `feat`, `fix`, `perf`, `revert`, `chore`, `docs`, `refactor`, `build`, and `ci` commits shown as their own sections — matching the fact that `chore:` commits already trigger patch releases. Consumers can fully override the notes formatting by committing their own `.releaserc.json` (or `release.config.js`) with a `generateNotes` key.
+Versions and release notes are derived from [Conventional Commits](https://www.conventionalcommits.org/). If the consumer repo has no semantic-release config of its own (`.releaserc*` / `release.config.*`), `release.yaml` seeds a default `.releaserc.json` that:
+
+- releases from `main`
+- uses the `conventionalcommits` preset for both version bumps and release notes (so `feat!:` / `fix!:` trigger a major release)
+- makes `chore:` commits trigger a patch release
+- shows `feat`, `fix`, `perf`, `revert`, `chore`, `docs`, `refactor`, `build`, and `ci` commits as their own release notes sections
+
+Consumers can override this by committing their own `.releaserc.json` (or `release.config.js`). A consumer config replaces the default entirely, so it must set `branches` and list its `plugins` (including `@semantic-release/github`). The only package the action installs beyond semantic-release's default plugins is `conventional-changelog-conventionalcommits`.
 
 ---
 
