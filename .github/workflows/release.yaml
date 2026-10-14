@@ -121,7 +121,7 @@ jobs:
 
       - name: Create Release
         id: create-release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8.1.0
         with:
           semantic_version: 25
           extra_plugins: |
