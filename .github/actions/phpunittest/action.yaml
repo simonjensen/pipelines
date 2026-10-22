@@ -5,6 +5,10 @@ inputs:
   src-path:
     description: Path to the directory containing all PHP code, relative to the repository root
     required: true
+  php-extensions:
+    description: Space-separated list of PHP extensions to install before running the tests
+    required: false
+    default: gd
 
 runs:
   using: composite
@@ -13,4 +17,11 @@ runs:
     - name: Run PHPUnittest
       shell: bash
       run: |
-        docker run --rm -v $(pwd)/${{ inputs.src-path }}:/src -w /src ghcr.io/simonjensen/docker-php8.3:0.0.3 ./vendor/bin/phpunit tests/
+        docker run --rm \
+          -v "$(pwd)/${{ inputs.src-path }}:/src" \
+          -w /src \
+          php:8.5-cli \
+          sh -c 'curl -sSLf -o /usr/local/bin/install-php-extensions https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions \
+            && chmod +x /usr/local/bin/install-php-extensions \
+            && install-php-extensions ${{ inputs.php-extensions }} \
+            && ./vendor/bin/phpunit tests/'

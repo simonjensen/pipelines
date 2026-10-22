@@ -22,7 +22,7 @@ These are the building blocks used internally by the reusable workflows. They ca
 | Action                   | Directory                          | Purpose                                                                                   |
 | ------------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------- |
 | Composer Install         | `actions/composer-install`         | Installs PHP dependencies via Composer inside Docker                                      |
-| PHPUnit                  | `actions/phpunittest`              | Runs the PHPUnit test suite inside Docker                                                 |
+| PHPUnit                  | `actions/phpunittest`              | Runs the PHPUnit test suite in the official `php:8.5-cli` image with GD installed         |
 | Docker Build And Publish | `actions/docker-build-and-publish` | Builds the Docker image; pushes to `ghcr.io` only when a `github_token` input is provided |
 
 Semver tagging and GitHub Release creation are handled directly by [`cycjimmy/semantic-release-action`](https://github.com/cycjimmy/semantic-release-action) (which runs [semantic-release](https://github.com/semantic-release/semantic-release)) in `release.yaml` — there are no internal composite actions for those steps.
