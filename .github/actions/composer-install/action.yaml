@@ -13,4 +13,4 @@ runs:
     - name: Install Composer dependencies
       shell: bash
       run: |
-        docker run --rm -v $(pwd)/${{ inputs.composer-path }}:/src -w /src ghcr.io/simonjensen/docker-php8.3:0.0.3 composer install --no-progress --no-ansi --no-interaction --optimize-autoloader --prefer-dist
+        docker run --rm -v $(pwd)/${{ inputs.composer-path }}:/src -w /src docker.io/library/composer:2 install --no-interaction --ignore-platform-req=ext-gd
