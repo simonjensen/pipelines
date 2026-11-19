@@ -123,7 +123,7 @@ jobs:
         id: create-release
         uses: cycjimmy/semantic-release-action@v8.1.4
         with:
-          semantic_version: 25
+          semantic_version: 26
           extra_plugins: |
             conventional-changelog-conventionalcommits@9
         env:
